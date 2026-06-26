@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"os"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -71,11 +72,21 @@ func (s *Server) uploadMedia(w http.ResponseWriter, r *http.Request) {
 			Caption: "Bu videoni siz post yaratish uchun yukladingiz (Qoralama).",
 		})
 	case "video_note":
+		croppedFile, err := cropVideoToSquare(r.Context(), file)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to crop video: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer func() {
+			croppedFile.Close()
+			os.Remove(croppedFile.Name())
+		}()
+
 		msg, sendErr = s.botAPI.SendVideoNote(r.Context(), &bot.SendVideoNoteParams{
 			ChatID: chatID,
 			VideoNote: &models.InputFileUpload{
 				Filename: header.Filename,
-				Data:     file,
+				Data:     croppedFile,
 			},
 		})
 	default:
