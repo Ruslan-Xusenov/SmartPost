@@ -1,0 +1,87 @@
+:root {
+  /* Telegram theme-aware colors */
+  --tg-bg: var(--tg-theme-bg-color, #1a1a2e);
+  --tg-text: var(--tg-theme-text-color, #eaeaea);
+  --tg-hint: var(--tg-theme-hint-color, #8a8a9a);
+  --tg-link: var(--tg-theme-link-color, #6c63ff);
+  --tg-btn: var(--tg-theme-button-color, #6c63ff);
+  --tg-btn-text: var(--tg-theme-button-text-color, #ffffff);
+  --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #16213e);
+
+  /* Custom palette */
+  --primary: #6c63ff;
+  --primary-hover: #5a52e0;
+  --primary-glow: rgba(108, 99, 255, 0.3);
+  --accent: #00d2ff;
+  --accent-glow: rgba(0, 210, 255, 0.2);
+  --success: #00c853;
+  --warning: #ff9100;
+  --danger: #ff1744;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(108, 99, 255, 0.4);
+  --shadow: rgba(0, 0, 0, 0.3);
+
+  /* Typography */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 20px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--font);
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.fade-in { animation: fadeIn 0.35s var(--transition) forwards; }
+.slide-up { animation: slideUp 0.4s var(--transition) forwards; }
+.scale-in { animation: scaleIn 0.3s var(--transition) forwards; }
