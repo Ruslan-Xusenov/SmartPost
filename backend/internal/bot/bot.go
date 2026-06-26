@@ -90,9 +90,8 @@ func (b *Bot) WebhookHandler() func(ctx context.Context, bBot *bot.Bot, update *
 func (b *Bot) Start(ctx context.Context) {
 	if b.cfg.WebhookURL == "" {
 		b.api.Start(ctx)
-	} else {
-		b.api.StartWebhook(ctx)
 	}
+	// In webhook mode, the API server handles incoming requests.
 }
 
 func (b *Bot) HandleWebhookUpdate(ctx context.Context, update *models.Update) {

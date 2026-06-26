@@ -6,6 +6,17 @@ import PostList from './pages/PostList';
 const App: Component = () => {
   const [page, setPage] = createSignal('home');
 
+  const tg = window.Telegram?.WebApp;
+
+  if (!tg?.initData) {
+    return (
+      <div style={{ padding: "20px", "text-align": "center", color: "var(--tg-theme-text-color, #000)" }}>
+        <h2>Xatolik</h2>
+        <p>Kechirasiz, ushbu ilovaga faqatgina Telegram orqali kirish mumkin.</p>
+      </div>
+    );
+  }
+
   const navigate = (p: string) => {
     setPage(p);
     const tg = window.Telegram?.WebApp;

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -76,7 +77,12 @@ func main() {
 	}()
 	log.Println("✅ Asynq worker started")
 
-	apiServer := api.NewServer(cfg, dbPool, publisher)
+	var webhookHandler http.Handler
+	if cfg.WebhookURL != "" {
+		webhookHandler = tgBot.API().WebhookHandler()
+	}
+
+	apiServer := api.NewServer(cfg, dbPool, publisher, webhookHandler)
 	go func() {
 		if err := apiServer.Start(); err != nil {
 			log.Fatalf("❌ API server error: %v", err)

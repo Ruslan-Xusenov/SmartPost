@@ -22,7 +22,7 @@ type Server struct {
 }
 
 // NewServer creates a new API server.
-func NewServer(cfg *config.Config, db *pgxpool.Pool, publisher *scheduler.Publisher) *Server {
+func NewServer(cfg *config.Config, db *pgxpool.Pool, publisher *scheduler.Publisher, webhookHandler http.Handler) *Server {
 	s := &Server{
 		router:    chi.NewRouter(),
 		db:        db,
@@ -30,7 +30,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, publisher *scheduler.Publis
 		publisher: publisher,
 	}
 	s.setupMiddleware()
-	s.setupRoutes()
+	s.setupRoutes(webhookHandler)
 	return s
 }
 
@@ -48,7 +48,11 @@ func (s *Server) setupMiddleware() {
 	}))
 }
 
-func (s *Server) setupRoutes() {
+func (s *Server) setupRoutes(webhookHandler http.Handler) {
+	if webhookHandler != nil {
+		s.router.Post("/bot/webhook", webhookHandler.ServeHTTP)
+	}
+
 	s.router.Route("/api", func(r chi.Router) {
 		// TWA auth middleware
 		r.Use(s.twaAuthMiddleware)
