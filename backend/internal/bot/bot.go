@@ -33,7 +33,6 @@ func New(cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client, publisher *sch
 	opts := []bot.Option{
 		bot.WithDefaultHandler(b.defaultHandler),
 		bot.WithCallbackQueryDataHandler("", bot.MatchTypePrefix, b.callbackHandler),
-		bot.WithMiddlewares(b.loggingMiddleware),
 	}
 
 	api, err := bot.New(cfg.BotToken, opts...)
@@ -91,17 +90,8 @@ func (b *Bot) WebhookHandler() func(ctx context.Context, bBot *bot.Bot, update *
 func (b *Bot) Start(ctx context.Context) {
 	if b.cfg.WebhookURL == "" {
 		b.api.Start(ctx)
-	}
-	// In webhook mode, the API server handles incoming requests.
-}
-
-func (b *Bot) loggingMiddleware(next bot.HandlerFunc) bot.HandlerFunc {
-	return func(ctx context.Context, bot *bot.Bot, update *models.Update) {
-		log.Printf("📥 [TGBOT] Received update: %+v", update)
-		if update.Message != nil {
-			log.Printf("📩 Message text: %q", update.Message.Text)
-		}
-		next(ctx, bot, update)
+	} else {
+		b.api.StartWebhook(ctx)
 	}
 }
 
