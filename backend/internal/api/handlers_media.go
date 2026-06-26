@@ -29,8 +29,8 @@ func (s *Server) uploadMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit upload size to 50MB (Telegram's limit for bots)
-	err = r.ParseMultipartForm(50 << 20)
+	// Limit upload size to 500MB
+	err = r.ParseMultipartForm(500 << 20)
 	if err != nil {
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
