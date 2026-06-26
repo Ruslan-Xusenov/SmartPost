@@ -59,7 +59,7 @@ func (s *Sender) SendPost(ctx context.Context, post *mdl.Post) error {
 	case mdl.MediaTypeVideo:
 		return s.sendVideo(ctx, chatID, post, keyboard)
 	case mdl.MediaTypeVideoNote:
-		return s.sendVideoNote(ctx, chatID, post)
+		return s.sendVideoNote(ctx, chatID, post, keyboard)
 	default:
 		return fmt.Errorf("unknown media type: %s", post.MediaType)
 	}
@@ -118,10 +118,13 @@ func (s *Sender) sendVideo(ctx context.Context, chatID int64, post *mdl.Post, ke
 	return nil
 }
 
-func (s *Sender) sendVideoNote(ctx context.Context, chatID int64, post *mdl.Post) error {
+func (s *Sender) sendVideoNote(ctx context.Context, chatID int64, post *mdl.Post, keyboard *models.InlineKeyboardMarkup) error {
 	params := &bot.SendVideoNoteParams{
 		ChatID:    chatID,
 		VideoNote: &models.InputFileString{Data: post.FileID},
+	}
+	if keyboard != nil {
+		params.ReplyMarkup = keyboard
 	}
 	_, err := s.api.SendVideoNote(ctx, params)
 	if err != nil {
