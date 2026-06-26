@@ -5,7 +5,10 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 )
@@ -43,16 +46,19 @@ func (s *Server) twaAuthMiddleware(next http.Handler) http.Handler {
 
 // validateInitData checks the HMAC-SHA256 signature of Telegram initData.
 func (s *Server) validateInitData(initData string) bool {
-	// Parse the query string
-	params := parseQueryString(initData)
-
-	hash, ok := params["hash"]
-	if !ok {
+	// Parse the query string (this handles URL decoding)
+	params, err := url.ParseQuery(initData)
+	if err != nil {
 		return false
 	}
 
-	// Remove hash from params and sort
-	delete(params, "hash")
+	hash := params.Get("hash")
+	if hash == "" {
+		return false
+	}
+
+	// Remove hash from params and sort keys
+	params.Del("hash")
 	var keys []string
 	for k := range params {
 		keys = append(keys, k)
@@ -62,7 +68,7 @@ func (s *Server) validateInitData(initData string) bool {
 	// Build data-check-string
 	var parts []string
 	for _, k := range keys {
-		parts = append(parts, k+"="+params[k])
+		parts = append(parts, k+"="+params.Get(k))
 	}
 	dataCheckString := strings.Join(parts, "\n")
 
@@ -80,39 +86,22 @@ func hmacSHA256(key, data []byte) []byte {
 	return h.Sum(nil)
 }
 
-func parseQueryString(qs string) map[string]string {
-	params := make(map[string]string)
-	for _, pair := range strings.Split(qs, "&") {
-		kv := strings.SplitN(pair, "=", 2)
-		if len(kv) == 2 {
-			params[kv[0]] = kv[1]
-		}
-	}
-	return params
-}
-
 func extractUserID(initData string) string {
-	// Simple extraction - in production, decode the JSON user object
-	params := parseQueryString(initData)
-	if user, ok := params["user"]; ok {
-		// user is URL-encoded JSON, extract id field
-		// For simplicity, find "id": in the string
-		idx := strings.Index(user, "%22id%22%3A")
-		if idx != -1 {
-			rest := user[idx+len("%22id%22%3A"):]
-			end := strings.IndexAny(rest, "%,}")
-			if end != -1 {
-				return rest[:end]
-			}
-		}
-		// Try non-encoded format
-		idx = strings.Index(user, `"id":`)
-		if idx != -1 {
-			rest := user[idx+5:]
-			end := strings.IndexAny(rest, ",}")
-			if end != -1 {
-				return strings.TrimSpace(rest[:end])
-			}
+	params, err := url.ParseQuery(initData)
+	if err != nil {
+		return ""
+	}
+	
+	userStr := params.Get("user")
+	if userStr == "" {
+		return ""
+	}
+	
+	// Parse JSON
+	var user map[string]interface{}
+	if err := json.Unmarshal([]byte(userStr), &user); err == nil {
+		if id, ok := user["id"].(float64); ok {
+			return fmt.Sprintf("%.0f", id)
 		}
 	}
 	return ""
