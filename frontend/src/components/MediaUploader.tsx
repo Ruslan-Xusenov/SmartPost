@@ -1,30 +1,41 @@
-import { Component } from 'solid-js';
+import { Component, createSignal, Show } from 'solid-js';
 import { mediaType, setMediaType, setMediaPreview, setFileId } from '../stores/postStore';
+import { api } from '../api/client';
 
 const MediaUploader: Component = () => {
   let fileInput: HTMLInputElement | undefined;
 
-  const handleFile = (e: Event) => {
+  const [isUploading, setIsUploading] = createSignal(false);
+
+  const handleFile = async (e: Event) => {
     const target = e.target as HTMLInputElement;
     const file = target.files?.[0];
     if (!file) return;
 
-    // Determine media type from file
+    // Determine media type from file if not already explicitly set to a specific video type
     if (file.type.startsWith('image/')) {
       setMediaType('photo');
-    } else if (file.type.startsWith('video/')) {
+    } else if (file.type.startsWith('video/') && mediaType() !== 'video_note') {
       setMediaType('video');
     }
 
-    // Create preview URL
-    const url = URL.createObjectURL(file);
-    setMediaPreview(url);
-
-    // In production, we would upload to server and get file_id
-    // For now, store the filename as a placeholder
-    setFileId(file.name);
-
-    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+    setIsUploading(true);
+    try {
+      // Upload to server and get file_id by sending a preview to the user
+      const res = await api.uploadMedia(file, mediaType());
+      setFileId(res.file_id);
+      
+      // Create preview URL
+      const url = URL.createObjectURL(file);
+      setMediaPreview(url);
+      
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
+    } catch (err: any) {
+      window.Telegram?.WebApp?.showAlert(`Fayl yuklashda xatolik: ${err.message}`);
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('error');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const mediaTypeOptions = [
@@ -68,10 +79,10 @@ const MediaUploader: Component = () => {
             onChange={handleFile}
           />
           <div class="upload-zone__icon">
-            {mediaType() === 'photo' ? '📷' : mediaType() === 'video_note' ? '🔵' : '🎥'}
+            {isUploading() ? '⏳' : mediaType() === 'photo' ? '📷' : mediaType() === 'video_note' ? '🔵' : '🎥'}
           </div>
           <div class="upload-zone__text">
-            Fayl yuklash uchun bosing
+            {isUploading() ? 'Fayl yuklanmoqda... Kuting' : 'Fayl yuklash uchun bosing'}
           </div>
         </div>
       )}

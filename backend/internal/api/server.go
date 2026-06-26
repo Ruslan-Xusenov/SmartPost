@@ -9,6 +9,7 @@ import (
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/go-telegram/bot"
 	"github.com/smartpost/backend/internal/config"
 	"github.com/smartpost/backend/internal/scheduler"
 )
@@ -19,15 +20,17 @@ type Server struct {
 	db        *pgxpool.Pool
 	cfg       *config.Config
 	publisher *scheduler.Publisher
+	botAPI    *bot.Bot
 }
 
 // NewServer creates a new API server.
-func NewServer(cfg *config.Config, db *pgxpool.Pool, publisher *scheduler.Publisher, webhookHandler http.Handler) *Server {
+func NewServer(cfg *config.Config, db *pgxpool.Pool, publisher *scheduler.Publisher, webhookHandler http.Handler, botAPI *bot.Bot) *Server {
 	s := &Server{
 		router:    chi.NewRouter(),
 		db:        db,
 		cfg:       cfg,
 		publisher: publisher,
+		botAPI:    botAPI,
 	}
 	s.setupMiddleware()
 	s.setupRoutes(webhookHandler)
@@ -65,6 +68,8 @@ func (s *Server) setupRoutes(webhookHandler http.Handler) {
 		r.Delete("/posts/{id}", s.deletePost)
 		r.Post("/posts/{id}/send", s.sendPost)
 		r.Post("/posts/{id}/schedule", s.schedulePost)
+		
+		r.Post("/upload", s.uploadMedia)
 	})
 
 	// Health check

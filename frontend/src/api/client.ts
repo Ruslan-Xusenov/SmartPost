@@ -94,4 +94,27 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ scheduled_at: scheduledAt }),
     }),
+
+  uploadMedia: async (file: File, mediaType: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('media_type', mediaType);
+
+    const headers: Record<string, string> = {
+      'X-Telegram-Init-Data': getInitData(),
+    };
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+
+    return res.json() as Promise<{ file_id: string; file_name: string }>;
+  },
 };

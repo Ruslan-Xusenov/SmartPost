@@ -82,7 +82,7 @@ func main() {
 		webhookHandler = tgBot.API().WebhookHandler()
 	}
 
-	apiServer := api.NewServer(cfg, dbPool, publisher, webhookHandler)
+	apiServer := api.NewServer(cfg, dbPool, publisher, webhookHandler, tgBot.API())
 	go func() {
 		if err := apiServer.Start(); err != nil {
 			log.Fatalf("❌ API server error: %v", err)
